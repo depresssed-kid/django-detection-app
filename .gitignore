@@ -1,0 +1,8 @@
+models/*
+*.pyc         # Скомпилированные файлы Python
+__pycache__/ # Папка с кэшем Python
+.DS_Store      # Файлы macOS Desktop Services
+venv/         # Папка виртуального окружения Python
+*.log         # Лог-файлы
+*.sqlite3     # Файлы базы данных SQLite
+media/        # Папка с медиафайлами (если вы не хотите их отслеживать)
