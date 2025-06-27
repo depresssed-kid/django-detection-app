@@ -30,9 +30,6 @@ def image_upload_view(request):
         if form.is_valid():
             image = request.FILES['image']
 
-            #file_name = default_storage.save(os.path.join('uploads', image.name),image)  # uploads/ - подпапка в MEDIA_ROOT
-            #file_url = default_storage.url(file_name)  # Получаем URL-адрес
-
             try:
                 img = Image.open(image).convert('RGB')
             except Exception as e:
@@ -41,38 +38,35 @@ def image_upload_view(request):
             preprocess = transforms.Compose([
                 transforms.Resize((640, 640)),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) неверно считается норма
             ])
-            img_tensor = preprocess(img).unsqueeze(0)  # Добавляем batch dimension
+            img_tensor = preprocess(img).unsqueeze(0)
 
             with torch.no_grad():
                 img_tensor = img_tensor.to(device)
                 results = model(img_tensor)
                 boxes = results[0].boxes
-                if boxes: #  Проверяем, есть ли детекции
-                    xyxy = boxes.xyxy  # координаты (x1, y1, x2, y2) в формате tensor
-                    conf = boxes.conf   # уверенность (confidence) в формате tensor
-                    cls = boxes.cls    # класс в формате tensor
+                if boxes:
+                    xyxy = boxes.xyxy
+                    conf = boxes.conf
+                    cls = boxes.cls
 
-                    # Преобразуем обратно в PIL Image
-                    img = Image.open(image).convert("RGB") #  Открываем снова для рисования, важно, что бы был формат RGB
+                    img = Image.open(image).convert("RGB").resize((640, 640))
                     draw = ImageDraw.Draw(img)
 
-                    # Рисуем bounding boxes
                     for i in range(len(xyxy)):
-                        x1, y1, x2, y2 = xyxy[i].cpu().numpy().astype(int) #Преобразуем в numpy и int
+                        x1, y1, x2, y2 = xyxy[i].cpu().numpy().astype(int)
                         confidence = conf[i].cpu().numpy()
-                        class_id = int(cls[i].cpu().numpy()) #id класса
-                        class_name = results[0].names[class_id] #Имя класса
+                        class_id = int(cls[i].cpu().numpy())
+                        class_name = results[0].names[class_id]
                         label = f"{class_name} {confidence:.2f}"
 
                         draw.rectangle(((x1, y1), (x2, y2)), outline="red", width=2)
-                        draw.text((x1, y1 - 10), label, fill="red")
+                        draw.text((x1, y1 - 15), label, fill="red", font_size=15)
 
-                    # Сохраняем изображение в память (BytesIO)
                     output_io = io.BytesIO()
-                    img.save(output_io, format='JPEG') #  Сохраняем в JPEG (или PNG)
-                    output_io.seek(0) # Перемещаем курсор в начало
+                    img.save(output_io, format='JPEG')
+                    output_io.seek(0)
 
 
                     encoded_string = base64.b64encode(output_io.read()).decode('utf-8')
