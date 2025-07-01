@@ -1,6 +1,8 @@
 models/*
 *.pyc         # Скомпилированные файлы Python
 __pycache__/ # Папка с кэшем Python
+cv_app/__pycache__/
+model_inference/__pycache__/
 .DS_Store      # Файлы macOS Desktop Services
 venv/         # Папка виртуального окружения Python
 *.log         # Лог-файлы
